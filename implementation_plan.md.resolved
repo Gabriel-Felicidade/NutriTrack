@@ -1,0 +1,97 @@
+# Plano de Implementação: Sistema de Registro de Calorias e Jejum
+
+Este plano detalha o passo a passo para desenvolver a aplicação, dividindo o projeto em etapas lógicas. Cada etapa representa um pacote de trabalho coeso, ideal para ser "commitado" de forma separada e manter um histórico claro, conforme exigido pelos critérios de avaliação.
+
+## Proposed Changes
+
+### Etapa 1: Setup do Projeto e Configuração Inicial
+* **Objetivo:** Criar a base do projeto Next.js e configurar dependências.
+* **Ações:**
+  * Inicializar o projeto com `npx create-next-app@latest` (TypeScript, Tailwind CSS, App Router).
+  * Instalar bibliotecas auxiliares (ex: `lucide-react` para ícones, `date-fns` para lidar com datas, `zod` para validação).
+  * Inicializar e configurar o `shadcn/ui`.
+  * Importar e configurar as imagens/logos da pasta `img` para uso global no projeto.
+  * Estruturar pastas principais (`app/`, `components/`, `lib/`, `types/`).
+* **Sugestão de Commit:** `chore: initial project setup with Next.js, shadcn/ui, and assets`
+
+### Etapa 2: Configuração de Autenticação e Banco de Dados (Firebase)
+* **Objetivo:** Preparar a conexão com o Firebase.
+* **Ações:**
+  * Criar o projeto no Firebase.
+  * Configurar as variáveis de ambiente (`.env.local`) e criar um arquivo `.env.example`.
+  * Criar o cliente de conexão (`lib/firebase.ts`).
+* **Sugestão de Commit:** `chore: setup Firebase authentication and database clients`
+
+### Etapa 3: Módulo de Autenticação (Frontend e Integração)
+* **Objetivo:** Permitir o cadastro, login, logout e proteger rotas.
+* **Ações:**
+  * Criar páginas de Login e Cadastro (`app/(auth)/login`, `app/(auth)/register`).
+  * Implementar formulários com validação.
+  * Criar um contexto ou hook para o estado de autenticação do usuário.
+  * Proteger o acesso ao painel (redirecionar se não estiver logado).
+* **Sugestão de Commit:** `feat: implement Firebase user authentication and protected routes`
+
+### Etapa 4: Layout Principal, UI Base e Aviso Ético
+* **Objetivo:** Criar o esqueleto visual do app onde as funcionalidades viverão.
+* **Ações:**
+  * Criar o layout da Dashboard (Sidebar/Navbar com uso dos logos da pasta img).
+  * Adicionar o "Aviso Ético" no rodapé conforme exigido no documento.
+* **Sugestão de Commit:** `feat: add base UI layout, shadcn components, and ethical notice`
+
+### Etapa 5: Módulo de Meta Calórica
+* **Objetivo:** Permitir que o usuário defina sua meta diária.
+* **Ações:**
+  * Criar estrutura no Firebase Firestore para o perfil do usuário.
+  * Implementar formulário/modal para definir e editar a meta calórica.
+  * **[NOVO]** Adicionar notificação de aviso caso a meta definida seja excessivamente baixa (ex: menor que 1200 kcal), alertando que o valor está fora do recomendado para a saúde.
+  * Mostrar a meta na tela principal (Dashboard).
+* **Sugestão de Commit:** `feat: add calorie goal setting functionality with safety warning`
+
+### Etapa 6: Registro de Calorias (CRUD)
+* **Objetivo:** Registrar as refeições diárias e gerenciar os dados.
+* **Ações:**
+  * Criar coleção `refeicoes` no Firestore.
+  * Criar formulário para adicionar refeição (Data/hora, Descrição, Calorias, Tipo da Refeição).
+  * Listar as refeições do dia atual no Dashboard.
+  * Adicionar opções de Editar e Excluir refeições.
+  * Criar uma barra de progresso (Calorias Consumidas vs Meta).
+* **Sugestão de Commit:** `feat: implement calorie tracking CRUD and daily progress bar`
+
+### Etapa 7: Módulo de Registro de Jejum
+* **Objetivo:** Controlar o ciclo de jejum.
+* **Ações:**
+  * Criar coleção `jejuns` no Firestore.
+  * Interface para selecionar tipo de jejum (16:8, 18:6, etc.).
+  * Lógica para "Iniciar Jejum" e "Encerrar Jejum" (com cálculo de duração).
+  * Garantir que exista apenas um jejum ativo por vez.
+* **Sugestão de Commit:** `feat: implement intermittent fasting timer and logic`
+
+### Etapa 8: Históricos e Dashboard Semanal (Gráficos)
+* **Objetivo:** Visualizar os dados dos últimos 7 dias.
+* **Ações:**
+  * Instalar e configurar biblioteca de gráficos (ex: Recharts).
+  * Desenvolver gráfico de barras/linhas de calorias consumidas vs meta nos últimos 7 dias.
+  * Desenvolver indicador de horas de jejum nos últimos 7 dias.
+  * Exibir agregados semanais (média calórica, tempo médio de jejum).
+* **Sugestão de Commit:** `feat: add weekly charts and history metrics`
+
+### Etapa 9: Refinamento, UX/UI e Validações Seguras
+* **Objetivo:** Polimento da aplicação.
+* **Ações:**
+  * Implementar estados visuais: Loading (skeletons/spinners), Erro e Empty States (quando não há dados).
+  * Tratar responsividade para mobile.
+  * Confirmar segurança (regras Firestore) para isolamento de dados.
+* **Sugestão de Commit:** `feat: improve UX/UI, add loading states, and enforce database security`
+
+### Etapa 10: Bônus (Opcionais) e Documentação Final
+* **Objetivo:** Entregar os extras e documentar para avaliação.
+* **Ações:**
+  * (Bônus) Implementar Tema Escuro (Dark Mode) nativo do shadcn.
+  * Escrever o `README.md` detalhado (setup, tecnologias, variáveis de ambiente).
+* **Sugestão de Commit:** `docs: update README, implement dark mode, and prepare for presentation`
+
+---
+
+## Verification Plan
+
+Ao final de cada etapa, testaremos localmente (`npm run dev`) a funcionalidade em questão, validando-a contra a lista de requisitos funcionais e não funcionais do seu documento. Por exemplo, ao finalizar a Etapa 6, testaremos a criação, edição e exclusão de calorias com diferentes usuários.
