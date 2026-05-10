@@ -12,7 +12,7 @@ import { db } from "@/lib/firebase";
 import { Trash2, Utensils, Zap } from "lucide-react";
 import Image from "next/image";
 import { FastingTimer } from "@/components/dashboard/FastingTimer";
-
+import { WeeklyProgress } from "@/components/dashboard/WeeklyProgress";
 
 
 interface Meal {
@@ -165,6 +165,21 @@ export default function Home() {
         <FastingTimer />
       </div>
 
+            {/* GRÁFICO SEMANAL */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <WeeklyProgress dailyGoal={dailyGoal} />
+        
+        {/* Espaço para um futuro card lateral (ex: Curiosidade ou Dica do Dia) */}
+        <Card className="shadow-sm border-dashed flex flex-col items-center justify-center p-6 text-center bg-slate-50/50 dark:bg-zinc-950/50">
+          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
+            <Zap className="h-6 w-6" />
+          </div>
+          <h3 className="font-semibold">Dica de Saúde</h3>
+          <p className="text-xs text-muted-foreground mt-2">
+            Manter uma constância na sua meta diária ajuda seu metabolismo a se ajustar melhor aos períodos de jejum.
+          </p>
+        </Card>
+      </div>
 
       <div className="space-y-4">
         <h2 className="text-xl font-semibold flex items-center gap-2">
