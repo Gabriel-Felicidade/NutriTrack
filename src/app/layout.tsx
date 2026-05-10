@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   description: "Sistema para acompanhamento de consumo calórico e jejum intermitente.",
 };
 
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,9 +31,13 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-slate-50/50 dark:bg-zinc-950">
         <AuthProvider>
-          {children}
+          <Navbar />
+          <main className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-8">
+            {children}
+          </main>
+          <Footer />
         </AuthProvider>
       </body>
     </html>
