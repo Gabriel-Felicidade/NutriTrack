@@ -11,6 +11,9 @@ import { doc, getDoc, collection, query, where, getDocs, deleteDoc, orderBy } fr
 import { db } from "@/lib/firebase";
 import { Trash2, Utensils, Zap } from "lucide-react";
 import Image from "next/image";
+import { FastingTimer } from "@/components/dashboard/FastingTimer";
+
+
 
 interface Meal {
   id: string;
@@ -157,7 +160,11 @@ export default function Home() {
             </p>
           </CardContent>
         </Card>
+
+        {/* NOSSO NOVO CRONÔMETRO DE JEJUM AQUI! */}
+        <FastingTimer />
       </div>
+
 
       <div className="space-y-4">
         <h2 className="text-xl font-semibold flex items-center gap-2">
@@ -202,4 +209,6 @@ export default function Home() {
       </div>
     </div>
   );
+
+  
 }
