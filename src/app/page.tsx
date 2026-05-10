@@ -1,16 +1,46 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { buttonVariants } from "@/components/ui/button";
-import Link from "next/link";
+import Link from "next/image";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CalorieGoalModal } from "@/components/dashboard/CalorieGoalModal";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function Home() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const [dailyGoal, setDailyGoal] = useState(0);
+  const [loadingData, setLoadingData] = useState(true);
 
-  if (loading) {
+  // Busca os dados do usuário no Firestore ao carregar a página
+  useEffect(() => {
+    async function fetchUserData() {
+      if (user) {
+        try {
+          const docRef = doc(db, "users", user.uid);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            setDailyGoal(docSnap.data().dailyGoal || 0);
+          }
+        } catch (error) {
+          console.error("Erro ao buscar dados:", error);
+        } finally {
+          setLoadingData(false);
+        }
+      } else {
+        setLoadingData(false);
+      }
+    }
+
+    fetchUserData();
+  }, [user]);
+
+  if (authLoading || loadingData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -19,7 +49,6 @@ export default function Home() {
     );
   }
 
-  // Tela de boas-vindas para usuários não logados
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
@@ -45,63 +74,66 @@ export default function Home() {
         </div>
 
         <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto px-4">
-          <Link 
+          <a 
             href="/register" 
-            className={cn(buttonVariants({ variant: "default", size: "lg" }), "w-full sm:w-auto text-md shadow-lg shadow-primary/25")}
+            className={cn(buttonVariants({ variant: "default", size: "lg" }), "w-full sm:w-auto text-md shadow-lg shadow-primary/25 text-center")}
           >
             Começar Agora
-          </Link>
-          <Link 
+          </a>
+          <a 
             href="/login" 
-            className={cn(buttonVariants({ variant: "outline", size: "lg" }), "w-full sm:w-auto text-md bg-white/50 backdrop-blur-sm")}
+            className={cn(buttonVariants({ variant: "outline", size: "lg" }), "w-full sm:w-auto text-md bg-white/50 backdrop-blur-sm text-center")}
           >
             Já tenho uma conta
-          </Link>
+          </a>
         </div>
       </div>
     );
   }
 
-  // Dashboard Inicial para o usuário logado
   return (
     <div className="flex flex-col space-y-8 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Painel Principal</h1>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Painel Principal</h1>
+          <p className="text-muted-foreground">Bem-vindo de volta ao seu controle nutricional.</p>
+        </div>
+        
+        {/* Nosso Modal de Meta sendo usado aqui! */}
+        <CalorieGoalModal currentGoal={dailyGoal} onGoalUpdate={setDailyGoal} />
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {/* Futuro Card de Calorias */}
-        <Card className="shadow-sm">
+        <Card className="shadow-sm border-primary/10">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Calorias Hoje</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Meta Diária</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">--- kcal</div>
-            <p className="text-xs text-muted-foreground mt-1">Configuração pendente</p>
+            <div className="text-3xl font-bold text-primary">
+              {dailyGoal > 0 ? `${dailyGoal} kcal` : "Não definida"}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {dailyGoal > 0 ? "Objetivo ativo" : "Clique em 'Definir Meta' acima"}
+            </p>
           </CardContent>
         </Card>
 
-        {/* Futuro Card de Jejum */}
         <Card className="shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Status do Jejum</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Consumido Hoje</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-amber-600">Inativo</div>
-            <p className="text-xs text-muted-foreground mt-1">Nenhum jejum em andamento</p>
+            <div className="text-3xl font-bold">0 kcal</div>
+            <p className="text-xs text-muted-foreground mt-1">0% da sua meta</p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="mt-8">
-        <Card className="border-dashed bg-slate-50/50 dark:bg-zinc-950/50">
-          <CardHeader>
-            <CardTitle>Bem-vindo ao seu painel!</CardTitle>
-            <CardDescription>
-              Nas próximas etapas, adicionaremos os módulos de controle calórico e cronômetro de jejum aqui.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+      <div className="mt-8 p-6 rounded-xl border border-dashed bg-slate-50/50 dark:bg-zinc-950/50 text-center">
+        <h3 className="font-semibold text-lg">Próximos Passos</h3>
+        <p className="text-muted-foreground text-sm max-w-md mx-auto mt-2">
+          Agora que você já pode definir sua meta, o próximo passo será o registro das suas refeições diárias!
+        </p>
       </div>
     </div>
   );
