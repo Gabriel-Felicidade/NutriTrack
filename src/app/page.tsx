@@ -5,14 +5,30 @@ import { useAuth } from "@/context/AuthContext";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalorieGoalModal } from "@/components/dashboard/CalorieGoalModal";
-import { AddMealModal } from "@/components/dashboard/AddMealModal";
+import dynamic from "next/dynamic";
+
+const CalorieGoalModal = dynamic(() => import("@/components/dashboard/CalorieGoalModal").then(mod => mod.CalorieGoalModal), {
+  loading: () => <div className="h-9 w-24 animate-pulse bg-slate-200 rounded-md" />
+});
+
+const AddMealModal = dynamic(() => import("@/components/dashboard/AddMealModal").then(mod => mod.AddMealModal), {
+  loading: () => <div className="h-9 w-32 animate-pulse bg-slate-200 rounded-md" />
+});
+
+const WeeklyProgress = dynamic(() => import("@/components/dashboard/WeeklyProgress").then(mod => mod.WeeklyProgress), {
+  ssr: false,
+  loading: () => <div className="h-[300px] w-full animate-pulse bg-slate-100 rounded-xl" />
+});
+
+const EditMealModal = dynamic(() => import("@/components/dashboard/EditMealModal").then(mod => mod.EditMealModal), {
+  loading: () => <div className="h-9 w-9 animate-pulse bg-slate-200 rounded-full" />
+});
+
 import { doc, getDoc, collection, query, where, getDocs, deleteDoc, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Trash2, Utensils, Zap } from "lucide-react";
 import Image from "next/image";
 import { FastingTimer } from "@/components/dashboard/FastingTimer";
-import { WeeklyProgress } from "@/components/dashboard/WeeklyProgress";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { format } from "date-fns";
 
@@ -228,8 +244,9 @@ if (authLoading || loadingData) {
                       <p className="text-xs text-muted-foreground">{meal.type}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-6">
-                    <span className="font-bold text-lg">{meal.calories} <span className="text-xs font-normal text-muted-foreground">kcal</span></span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-lg mr-4">{meal.calories} <span className="text-xs font-normal text-muted-foreground">kcal</span></span>
+                    <EditMealModal meal={meal} onMealUpdated={fetchUserData} />
                     <Button 
                       variant="ghost" 
                       size="icon" 
