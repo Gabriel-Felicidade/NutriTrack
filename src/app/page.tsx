@@ -24,6 +24,10 @@ const EditMealModal = dynamic(() => import("@/components/dashboard/EditMealModal
   loading: () => <div className="h-9 w-9 animate-pulse bg-slate-200 rounded-full" />
 });
 
+const FastingHistory = dynamic(() => import("@/components/dashboard/FastingHistory").then(mod => mod.FastingHistory), {
+  loading: () => <div className="h-[200px] w-full animate-pulse bg-slate-100 rounded-xl" />
+});
+
 import { doc, getDoc, collection, query, where, getDocs, deleteDoc, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Trash2, Utensils, Zap } from "lucide-react";
@@ -200,25 +204,30 @@ if (authLoading || loadingData) {
           </CardContent>
         </Card>
 
-        {/* NOSSO NOVO CRONÔMETRO DE JEJUM AQUI! */}
         <FastingTimer />
       </div>
 
-            {/* GRÁFICO SEMANAL */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {/* GRÁFICO SEMANAL + HISTÓRICO */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <WeeklyProgress dailyGoal={dailyGoal} />
-        
-        {/* Espaço para um futuro card lateral (ex: Curiosidade ou Dica do Dia) */}
-        <Card className="shadow-sm border-dashed flex flex-col items-center justify-center p-6 text-center bg-slate-50/50 dark:bg-zinc-950/50">
-          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
-            <Zap className="h-6 w-6" />
-          </div>
-          <h3 className="font-semibold">Dica de Saúde</h3>
-          <p className="text-xs text-muted-foreground mt-2">
-            Manter uma constância na sua meta diária ajuda seu metabolismo a se ajustar melhor aos períodos de jejum.
-          </p>
-        </Card>
+        <FastingHistory />
       </div>
+
+      {/* DICA DE SAÚDE EM LARGURA TOTAL */}
+      <Card className="shadow-md border-primary/10 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-900/10 overflow-hidden">
+        <div className="p-6 md:p-8 flex flex-col md:flex-row items-center gap-6">
+          <div className="h-16 w-16 rounded-2xl bg-amber-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/30 shrink-0">
+            <Zap className="h-8 w-8" />
+          </div>
+          <div className="space-y-2 text-center md:text-left">
+            <h3 className="text-xl font-bold text-amber-800 dark:text-amber-400">Dica de Saúde NutriTrack</h3>
+            <p className="text-lg text-amber-900/80 dark:text-amber-200/70 leading-relaxed">
+              Manter uma constância na sua meta diária ajuda seu metabolismo a se ajustar melhor aos períodos de jejum. 
+              Beber água regularmente durante o jejum também potencializa a desintoxicação do corpo!
+            </p>
+          </div>
+        </div>
+      </Card>
 
       <div className="space-y-4">
         <h2 className="text-xl font-semibold flex items-center gap-2">

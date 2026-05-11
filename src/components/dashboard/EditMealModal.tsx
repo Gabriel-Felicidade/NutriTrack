@@ -66,7 +66,7 @@ export function EditMealModal({ meal, onMealUpdated }: { meal: Meal; onMealUpdat
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="edit-type">Tipo</Label>
-            <Select value={type} onValueChange={(val) => setType(val)}>
+            <Select value={type} onValueChange={(val) => setType(val as string)}>
               <SelectTrigger id="edit-type">
                 <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
