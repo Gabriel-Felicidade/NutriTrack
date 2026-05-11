@@ -13,7 +13,8 @@ import { Trash2, Utensils, Zap } from "lucide-react";
 import Image from "next/image";
 import { FastingTimer } from "@/components/dashboard/FastingTimer";
 import { WeeklyProgress } from "@/components/dashboard/WeeklyProgress";
-
+import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
+import { format } from "date-fns";
 
 interface Meal {
   id: string;
@@ -30,9 +31,15 @@ export default function Home() {
   const [loadingData, setLoadingData] = useState(true);
 
   const fetchUserData = useCallback(async () => {
-    if (!user) return;
+    // Se não tem usuário, não tem o que buscar, então paramos de carregar
+    if (!user) {
+      setLoadingData(false);
+      return;
+    }
     
     try {
+      setLoadingData(true); // Iniciamos o carregamento
+      
       // 1. Busca a Meta
       const docRef = doc(db, "users", user.uid);
       const docSnap = await getDoc(docRef);
@@ -41,9 +48,14 @@ export default function Home() {
       }
 
       // 2. Busca as Refeições do Dia Atual
-      const today = new Date().toISOString().split('T')[0];
+      const today = format(new Date(), "yyyy-MM-dd");
+
       const mealsRef = collection(db, "users", user.uid, "meals");
+      
+      // DICA: Se ainda estiver dando erro de carregamento, 
+      // tente remover o orderBy("timestamp", "desc") temporariamente
       const q = query(mealsRef, where("date", "==", today), orderBy("timestamp", "desc"));
+      
       const querySnapshot = await getDocs(q);
       
       const mealsList: Meal[] = [];
@@ -55,9 +67,10 @@ export default function Home() {
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
     } finally {
-      setLoadingData(false);
+      setLoadingData(false); // SEMPRE para de carregar aqui
     }
   }, [user]);
+
 
   useEffect(() => {
     fetchUserData();
@@ -78,14 +91,9 @@ export default function Home() {
   const totalCalories = meals.reduce((acc, meal) => acc + meal.calories, 0);
   const progressPercentage = dailyGoal > 0 ? Math.min((totalCalories / dailyGoal) * 100, 100) : 0;
 
-  if (authLoading || loadingData) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        <p className="mt-4 text-muted-foreground">Carregando seus dados...</p>
-      </div>
-    );
-  }
+if (authLoading || loadingData) {
+  return <DashboardSkeleton />;
+}
 
   if (!user) {
     return (

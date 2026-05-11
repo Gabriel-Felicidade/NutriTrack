@@ -10,6 +10,8 @@ import { PlusCircle, Utensils } from "lucide-react";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { format } from "date-fns";
+
 
 export function AddMealModal({ onMealAdded }: { onMealAdded: () => void }) {
   const [description, setDescription] = useState("");
@@ -29,7 +31,7 @@ export function AddMealModal({ onMealAdded }: { onMealAdded: () => void }) {
         calories: parseInt(calories),
         type,
         timestamp: serverTimestamp(), // Hora oficial do servidor
-        date: new Date().toISOString().split('T')[0] // Data simplificada YYYY-MM-DD
+        date: format(new Date(), "yyyy-MM-dd")// Data simplificada YYYY-MM-DD
       });
       
       setDescription("");
