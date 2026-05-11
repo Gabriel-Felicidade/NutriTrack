@@ -8,11 +8,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup, // Importamos o Grupo
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ModeToggle } from "@/components/ModeToggle";
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -40,6 +41,9 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* BOTÃO DE MODO ESCURO AQUI */}
+          <ModeToggle />
+
           <DropdownMenu>
             <DropdownMenuTrigger className="outline-none">
               <Avatar className="h-9 w-9 border-2 border-primary/20 hover:border-primary/50 transition-colors cursor-pointer">
@@ -47,14 +51,15 @@ export function Navbar() {
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
+              {/* Envolvemos a Label em um Group para resolver o erro do Base UI */}
+              <DropdownMenuGroup>
+                <div className="px-2 py-1.5 flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">Minha Conta</p>
                   <p className="text-xs leading-none text-muted-foreground truncate">
                     {user.email}
                   </p>
                 </div>
-              </DropdownMenuLabel>
+              </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout} className="text-red-600 cursor-pointer focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/50">
                 <LogOut className="mr-2 h-4 w-4" />
