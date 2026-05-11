@@ -12,8 +12,13 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
 
-
+/**
+ * MODAL DE ADIÇÃO DE REFEIÇÃO (CRUD - CREATE)
+ * Este componente é responsável por capturar a entrada do usuário e persistir
+ * um novo documento na sub-coleção "meals" do Firestore.
+ */
 export function AddMealModal({ onMealAdded }: { onMealAdded: () => void }) {
+  // ESTADOS LOCAIS: Controlam os inputs do formulário
   const [description, setDescription] = useState("");
   const [calories, setCalories] = useState("");
   const [type, setType] = useState("Almoço");
@@ -24,20 +29,25 @@ export function AddMealModal({ onMealAdded }: { onMealAdded: () => void }) {
     if (!user) return;
     
     try {
-      // Criamos uma nova "refeição" dentro de uma sub-coleção do usuário
-      // Isso mantém os dados organizados por dono
+      // PERSISTÊNCIA: Criamos uma nova "refeição" dentro da sub-coleção do usuário atual.
+      // Isso implementa um padrão de segurança onde cada usuário só acessa seus próprios dados.
       await addDoc(collection(db, "users", user.uid, "meals"), {
         description,
         calories: parseInt(calories),
         type,
-        timestamp: serverTimestamp(), // Hora oficial do servidor
-        date: format(new Date(), "yyyy-MM-dd")// Data simplificada YYYY-MM-DD
+        // serverTimestamp garante que a hora gravada seja a do servidor, evitando fraudes locais
+        timestamp: serverTimestamp(), 
+        // Armazenamos a data formatada para facilitar filtros e agrupamentos na Dashboard
+        date: format(new Date(), "yyyy-MM-dd")
       });
       
+      // RESET: Limpa os campos e fecha o modal após o salvamento
       setDescription("");
       setCalories("");
       setOpen(false);
-      onMealAdded(); // Avisa a página que uma nova refeição foi criada
+      
+      // NOTIFICAÇÃO: Avisa o componente pai que os dados mudaram (trigger para re-fetch)
+      onMealAdded(); 
     } catch (error) {
       console.error("Erro ao salvar refeição:", error);
     }
@@ -90,6 +100,7 @@ export function AddMealModal({ onMealAdded }: { onMealAdded: () => void }) {
           </div>
         </div>
         <DialogFooter>
+          {/* VALIDAÇÃO: O botão só é habilitado se houver descrição e calorias */}
           <Button onClick={handleSave} disabled={!description || !calories}>Salvar Refeição</Button>
         </DialogFooter>
       </DialogContent>

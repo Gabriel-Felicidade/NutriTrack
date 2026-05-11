@@ -9,6 +9,11 @@ import { useAuth } from "@/context/AuthContext";
 import { format, subDays, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+/**
+ * COMPONENTE DE GRÁFICO SEMANAL
+ * Este componente é responsável por mostrar visualmente o consumo calórico 
+ * dos últimos 7 dias. É uma peça fundamental para o usuário acompanhar sua evolução.
+ */
 export function WeeklyProgress({ dailyGoal }: { dailyGoal: number }) {
   const { user } = useAuth();
   const [chartData, setChartData] = useState<any[]>([]);
@@ -17,6 +22,9 @@ export function WeeklyProgress({ dailyGoal }: { dailyGoal: number }) {
     async function fetchWeeklyData() {
       if (!user) return;
 
+      // 1. GERAR ARRAY DOS ÚLTIMOS 7 DIAS
+      // Criamos uma lista de datas (YYYY-MM-DD) para garantir que mesmo dias
+      // sem refeições apareçam no gráfico (com valor 0).
       const last7Days = Array.from({ length: 7 }, (_, i) => {
         const date = subDays(new Date(), i);
         return format(date, "yyyy-MM-dd");
@@ -24,7 +32,9 @@ export function WeeklyProgress({ dailyGoal }: { dailyGoal: number }) {
 
       try {
         const mealsRef = collection(db, "users", user.uid, "meals");
-        // Buscamos refeições dos últimos 7 dias
+        
+        // 2. BUSCA NO FIREBASE
+        // Buscamos todas as refeições que tenham data maior ou igual a 7 dias atrás.
         const q = query(
           mealsRef, 
           where("date", ">=", last7Days[0]),
@@ -34,13 +44,18 @@ export function WeeklyProgress({ dailyGoal }: { dailyGoal: number }) {
         const querySnapshot = await getDocs(q);
         const mealsByDate: Record<string, number> = {};
 
+        // 3. AGRUPAMENTO POR DATA
+        // Como o Firebase retorna documentos individuais, somamos as calorias
+        // de cada refeição agrupando-as pela chave da data.
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           mealsByDate[data.date] = (mealsByDate[data.date] || 0) + (data.calories || 0);
         });
 
+        // 4. FORMATAÇÃO PARA O RECHARTS
+        // O componente de gráfico espera um array de objetos.
         const formattedData = last7Days.map(date => ({
-          name: format(new Date(date + "T00:00:00"), "EEE", { locale: ptBR }),
+          name: format(new Date(date + "T00:00:00"), "EEE", { locale: ptBR }), // Nome do dia (Ex: seg, ter)
           calorias: mealsByDate[date] || 0,
           fullDate: date
         }));
@@ -62,6 +77,7 @@ export function WeeklyProgress({ dailyGoal }: { dailyGoal: number }) {
       </CardHeader>
       <CardContent>
         <div className="h-[250px] w-full pt-4">
+          {/* Gráfico Responsivo que se ajusta ao tamanho do Card */}
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -72,7 +88,7 @@ export function WeeklyProgress({ dailyGoal }: { dailyGoal: number }) {
                 tick={{ fill: '#64748b', fontSize: 12 }}
                 dy={10}
               />
-              <YAxis hide />
+              <YAxis hide /> {/* Escondemos o eixo Y para um visual mais limpo (clean design) */}
               <Tooltip 
                 cursor={{ fill: '#f1f5f9' }}
                 content={({ active, payload }) => {
@@ -95,6 +111,7 @@ export function WeeklyProgress({ dailyGoal }: { dailyGoal: number }) {
                 {chartData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`} 
+                    // LÓGICA DE COR DINÂMICA: Fica vermelho se ultrapassar a meta calórica
                     fill={entry.calorias > dailyGoal && dailyGoal > 0 ? "#ef4444" : "#f59e0b"} 
                     fillOpacity={0.8}
                   />
@@ -107,3 +124,8 @@ export function WeeklyProgress({ dailyGoal }: { dailyGoal: number }) {
     </Card>
   );
 }
+
+/**
+ * PAINEL DE CONTROLE DE CRÉDITOS:
+ * Desenvolvido por Gabriel Felicidade com auxílio do Antigravity IDE.
+ */

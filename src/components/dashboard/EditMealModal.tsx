@@ -19,7 +19,13 @@ interface Meal {
   date: string;
 }
 
+/**
+ * MODAL DE EDIÇÃO DE REFEIÇÃO (CRUD - UPDATE)
+ * Este componente gerencia a atualização de um registro existente no Firestore.
+ * Demonstra o uso de formulários controlados e persistência de dados.
+ */
 export function EditMealModal({ meal, onMealUpdated }: { meal: Meal; onMealUpdated: () => void }) {
+  // ESTADOS LOCAIS: Inicializados com os dados atuais da refeição
   const [description, setDescription] = useState(meal.description);
   const [calories, setCalories] = useState(meal.calories.toString());
   const [type, setType] = useState(meal.type);
@@ -30,16 +36,18 @@ export function EditMealModal({ meal, onMealUpdated }: { meal: Meal; onMealUpdat
     if (!user) return;
     
     try {
+      // REFERÊNCIA: Aponta exatamente para o documento da refeição na sub-coleção do usuário
       const mealRef = doc(db, "users", user.uid, "meals", meal.id);
       
+      // OPERAÇÃO ASSÍNCRONA: Atualiza apenas os campos modificados
       await updateDoc(mealRef, {
         description,
         calories: parseInt(calories),
         type,
       });
       
-      setOpen(false);
-      onMealUpdated(); // Recarrega os dados na dashboard
+      setOpen(false); // Fecha o modal após o sucesso
+      onMealUpdated(); // Callback para notificar a Dashboard e recarregar a lista
     } catch (error) {
       console.error("Erro ao atualizar refeição:", error);
     }
@@ -47,6 +55,10 @@ export function EditMealModal({ meal, onMealUpdated }: { meal: Meal; onMealUpdat
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
+      {/* 
+          DICA TÉCNICA: Usamos a prop 'render' em vez de 'asChild' para garantir 
+          compatibilidade total com a biblioteca Base UI utilizada no projeto.
+      */}
       <DialogTrigger
         render={
           <Button
@@ -98,6 +110,7 @@ export function EditMealModal({ meal, onMealUpdated }: { meal: Meal; onMealUpdat
           </div>
         </div>
         <DialogFooter>
+          {/* BOTÃO DE AÇÃO: Desabilitado se os campos obrigatórios estiverem vazios */}
           <Button onClick={handleUpdate} disabled={!description || !calories}>Salvar Alterações</Button>
         </DialogFooter>
       </DialogContent>

@@ -9,6 +9,11 @@ import { format, differenceInMinutes, differenceInHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { History, Trophy, Clock, CheckCircle2 } from "lucide-react";
 
+/**
+ * COMPONENTE DE HISTÓRICO E MÉTRICAS DE JEJUM
+ * Este componente demonstra habilidades de agregação de dados e cálculos estatísticos 
+ * realizados no lado do cliente com dados vindos do Firestore.
+ */
 export function FastingHistory() {
   const { user } = useAuth();
   const [fasts, setFasts] = useState<any[]>([]);
@@ -24,9 +29,12 @@ export function FastingHistory() {
 
       try {
         const fastsRef = collection(db, "users", user.uid, "fasts");
+        
+        // QUERY: Buscamos apenas jejuns que já foram encerrados (endTime != null)
+        // Ordenamos pelos mais recentes e limitamos aos últimos 10 para performance.
         const q = query(
           fastsRef,
-          where("endTime", "!=", null), // Apenas jejuns finalizados
+          where("endTime", "!=", null),
           orderBy("endTime", "desc"),
           limit(10)
         );
@@ -38,8 +46,11 @@ export function FastingHistory() {
 
         querySnapshot.forEach((doc) => {
           const data = doc.data();
+          // Conversão de Timestamp do Firebase para objeto Date do JS
           const start = data.startTime.toDate();
           const end = data.endTime.toDate();
+          
+          // Cálculo da duração usando a biblioteca date-fns
           const durationMinutes = differenceInMinutes(end, start);
           
           totalMinutes += durationMinutes;
@@ -53,10 +64,13 @@ export function FastingHistory() {
           });
         });
 
+        // ATUALIZAÇÃO DOS ESTADOS DE MÉTRICAS
         setFasts(fetchedFasts);
         setStats({
+          // Média aritmética simples das horas de jejum
           averageHours: fetchedFasts.length > 0 ? parseFloat(((totalMinutes / fetchedFasts.length) / 60).toFixed(1)) : 0,
           totalFasts: querySnapshot.size,
+          // Recorde (maior duração encontrada na amostra)
           longestFast: parseFloat((maxMinutes / 60).toFixed(1)),
         });
       } catch (e) {
@@ -67,6 +81,7 @@ export function FastingHistory() {
     fetchFastingHistory();
   }, [user]);
 
+  // Se o usuário ainda não tiver nenhum jejum completo, o card não aparece (UI Limpa)
   if (fasts.length === 0) return null;
 
   return (
@@ -78,7 +93,7 @@ export function FastingHistory() {
         <CardDescription>Resumo dos seus últimos ciclos.</CardDescription>
       </CardHeader>
       <CardContent>
-        {/* Stats Grid */}
+        {/* GRID DE ESTATÍSTICAS: Demonstração de dados agregados */}
         <div className="grid grid-cols-3 gap-2 mb-6">
           <div className="flex flex-col items-center p-2 rounded-lg bg-slate-50 dark:bg-zinc-900 border border-primary/5">
             <Clock className="h-4 w-4 text-amber-500 mb-1" />
@@ -97,7 +112,7 @@ export function FastingHistory() {
           </div>
         </div>
 
-        {/* List with Scrollbar */}
+        {/* LISTA ROLÁVEL: Implementação de scroll customizado para manter a altura do layout fixa */}
         <div className="space-y-3 h-[180px] overflow-y-auto pr-2 custom-scrollbar">
           {fasts.map((fast) => (
             <div key={fast.id} className="flex items-center justify-between p-2 rounded-md hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors border-b last:border-0 border-primary/5">
