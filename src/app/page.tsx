@@ -97,10 +97,25 @@ if (authLoading || loadingData) {
 
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+      <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 bg-background">
         <div className="flex flex-col items-center space-y-6">
-          <div className="p-4 bg-white rounded-full shadow-lg dark:bg-white/10">
-            <Image src="/img/Logotipo-claro-removebg-preview.png" alt="Logo" width={220} height={110} priority className="object-contain" />
+          <div className="mb-4">
+            <Image 
+              src="/img/Logotipo-claro-removebg-preview.png" 
+              alt="Logo" 
+              width={350} 
+              height={175} 
+              priority 
+              className="object-contain dark:hidden" 
+            />
+            <Image 
+              src="/img/Logotipo-escuro-removebg-preview.png" 
+              alt="Logo" 
+              width={350} 
+              height={175} 
+              priority 
+              className="object-contain hidden dark:block" 
+            />
           </div>
           <div className="space-y-2 text-center">
             <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">

@@ -27,16 +27,22 @@ export function Navbar() {
       <div className="container flex h-16 items-center justify-between px-4 md:px-8 mx-auto">
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
-            <div className="relative h-8 w-8 overflow-hidden rounded-md bg-primary/10 flex items-center justify-center p-1">
+            <div className="relative h-12 w-40 flex items-center justify-center">
                <Image
                 src="/img/Logotipo-claro-removebg-preview.png"
                 alt="NutriTrack Logo"
-                width={32}
-                height={32}
-                className="object-contain"
+                fill
+                className="object-contain dark:hidden"
+                priority
+              />
+              <Image
+                src="/img/Logotipo-escuro-removebg-preview.png"
+                alt="NutriTrack Logo"
+                fill
+                className="object-contain hidden dark:block"
+                priority
               />
             </div>
-            <span className="font-bold text-xl tracking-tight hidden sm:inline-block">NutriTrack</span>
           </Link>
         </div>
 

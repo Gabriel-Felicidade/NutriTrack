@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import Image from "next/image";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -28,9 +29,27 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <Card className="w-full max-w-md">
-        <CardHeader>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background px-4">
+      <Link href="/" className="mb-6">
+        <Image 
+          src="/img/Logotipo-claro-removebg-preview.png" 
+          alt="NutriTrack Logo" 
+          width={240} 
+          height={120} 
+          className="object-contain dark:hidden"
+          priority
+        />
+        <Image 
+          src="/img/Logotipo-escuro-removebg-preview.png" 
+          alt="NutriTrack Logo" 
+          width={240} 
+          height={120} 
+          className="object-contain hidden dark:block"
+          priority
+        />
+      </Link>
+      <Card className="w-full max-w-md shadow-lg border-primary/5">
+        <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Login</CardTitle>
           <CardDescription>
             Entre com sua conta para acessar seus registros.
