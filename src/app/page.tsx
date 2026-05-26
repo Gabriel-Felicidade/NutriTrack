@@ -6,6 +6,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import dynamic from "next/dynamic";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 /**
  * OTIMIZAÇÃO DE PERFORMANCE:
@@ -39,7 +40,8 @@ import { Trash2, Utensils, Zap } from "lucide-react";
 import Image from "next/image";
 import { FastingTimer } from "@/components/dashboard/FastingTimer";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
-import { format } from "date-fns";
+import { format, parseISO, isToday, isYesterday } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Meal {
   id: string;
@@ -57,6 +59,9 @@ export default function Home() {
   const { user, loading: authLoading } = useAuth();
   const [dailyGoal, setDailyGoal] = useState(0);
   const [meals, setMeals] = useState<Meal[]>([]);
+  const [allMeals, setAllMeals] = useState<Meal[]>([]);
+  const [mealToDelete, setMealToDelete] = useState<Meal | null>(null);
+  const [activeTab, setActiveTab] = useState<"today" | "history">("today");
   const [loadingData, setLoadingData] = useState(true);
 
   // Função memorizada para buscar dados do Firebase
@@ -90,6 +95,15 @@ export default function Home() {
       });
       setMeals(mealsList);
 
+      // BUSCA DE HISTÓRICO: Buscamos todas as refeições ordenadas pelo timestamp
+      const qAll = query(mealsRef, orderBy("timestamp", "desc"));
+      const querySnapshotAll = await getDocs(qAll);
+      const allMealsList: Meal[] = [];
+      querySnapshotAll.forEach((doc) => {
+        allMealsList.push({ id: doc.id, ...doc.data() } as Meal);
+      });
+      setAllMeals(allMealsList);
+
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
     } finally {
@@ -103,15 +117,43 @@ export default function Home() {
   }, [fetchUserData]);
 
   // Função para deletar refeição (Operação DELETE do CRUD)
-  const handleDeleteMeal = async (mealId: string) => {
-    if (!user) return;
-    if (!confirm("Tem certeza que deseja excluir esta refeição?")) return;
+  const handleDeleteMeal = (meal: Meal) => {
+    setMealToDelete(meal);
+  };
 
+  const executeDeleteMeal = async () => {
+    if (!user || !mealToDelete) return;
     try {
-      await deleteDoc(doc(db, "users", user.uid, "meals", mealId));
+      await deleteDoc(doc(db, "users", user.uid, "meals", mealToDelete.id));
+      setMealToDelete(null);
       fetchUserData(); // Atualizamos a UI buscando os dados novamente
     } catch (error) {
       console.error("Erro ao excluir refeição:", error);
+    }
+  };
+
+  // Agrupador de refeições por data
+  const groupMealsByDate = (mealsList: Meal[]) => {
+    const groups: Record<string, Meal[]> = {};
+    mealsList.forEach((meal) => {
+      const dateStr = meal.date || "Sem data";
+      if (!groups[dateStr]) {
+        groups[dateStr] = [];
+      }
+      groups[dateStr].push(meal);
+    });
+    return groups;
+  };
+
+  // Formatador do título do grupo de data
+  const getGroupHeader = (dateStr: string) => {
+    try {
+      const date = parseISO(dateStr);
+      if (isToday(date)) return "Hoje";
+      if (isYesterday(date)) return "Ontem";
+      return format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    } catch (e) {
+      return dateStr;
     }
   };
 
@@ -242,50 +284,147 @@ export default function Home() {
         </div>
       </Card>
 
-      {/* LISTAGEM DE REFEIÇÕES (CRUD - Read) */}
+      {/* LISTAGEM E HISTÓRICO DE REFEIÇÕES (CRUD - Read) */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold flex items-center gap-2">
-          <Utensils className="h-5 w-5" /> Refeições de Hoje
-        </h2>
-        
-        {meals.length === 0 ? (
-          <Card className="border-dashed py-12 flex flex-col items-center justify-center text-center">
-            <p className="text-muted-foreground">Nenhuma refeição registrada hoje.</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">Clique em "Adicionar Refeição" para começar.</p>
-          </Card>
-        ) : (
-          <div className="grid gap-3">
-            {meals.map((meal) => (
-              <Card key={meal.id} className="shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                      <Utensils className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{meal.description}</p>
-                      <p className="text-xs text-muted-foreground">{meal.type}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-lg mr-4">{meal.calories} <span className="text-xs font-normal text-muted-foreground">kcal</span></span>
-                    {/* Botões de Ação do CRUD (Update e Delete) */}
-                    <EditMealModal meal={meal} onMealUpdated={fetchUserData} />
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="text-muted-foreground hover:text-red-600"
-                      onClick={() => handleDeleteMeal(meal.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-2">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <Utensils className="h-5 w-5" /> Registro de Refeições
+          </h2>
+          <div className="flex bg-slate-100 dark:bg-zinc-800 p-1 rounded-lg self-start sm:self-auto">
+            <button
+              onClick={() => setActiveTab("today")}
+              className={cn(
+                "px-3 py-1.5 text-xs font-medium rounded-md transition-all cursor-pointer",
+                activeTab === "today"
+                  ? "bg-white dark:bg-zinc-950 text-slate-900 dark:text-white shadow-sm"
+                  : "text-muted-foreground hover:text-slate-900 dark:hover:text-white"
+              )}
+            >
+              Hoje
+            </button>
+            <button
+              onClick={() => setActiveTab("history")}
+              className={cn(
+                "px-3 py-1.5 text-xs font-medium rounded-md transition-all cursor-pointer",
+                activeTab === "history"
+                  ? "bg-white dark:bg-zinc-950 text-slate-900 dark:text-white shadow-sm"
+                  : "text-muted-foreground hover:text-slate-900 dark:hover:text-white"
+              )}
+            >
+              Histórico Geral
+            </button>
           </div>
+        </div>
+        
+        {activeTab === "today" ? (
+          meals.length === 0 ? (
+            <Card className="border-dashed py-12 flex flex-col items-center justify-center text-center">
+              <p className="text-muted-foreground">Nenhuma refeição registrada hoje.</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">Clique em "Adicionar Refeição" para começar.</p>
+            </Card>
+          ) : (
+            <div className="grid gap-3">
+              {meals.map((meal) => (
+                <Card key={meal.id} className="shadow-sm hover:shadow-md transition-shadow">
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                        <Utensils className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{meal.description}</p>
+                        <p className="text-xs text-muted-foreground">{meal.type}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-lg mr-4">{meal.calories} <span className="text-xs font-normal text-muted-foreground">kcal</span></span>
+                      {/* Botões de Ação do CRUD (Update e Delete) */}
+                      <EditMealModal meal={meal} onMealUpdated={fetchUserData} />
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-muted-foreground hover:text-red-600"
+                        onClick={() => handleDeleteMeal(meal)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )
+        ) : (
+          allMeals.length === 0 ? (
+            <Card className="border-dashed py-12 flex flex-col items-center justify-center text-center">
+              <p className="text-muted-foreground">Nenhuma refeição registrada no histórico.</p>
+            </Card>
+          ) : (
+            <div className="space-y-6">
+              {Object.entries(groupMealsByDate(allMeals)).map(([dateStr, groupMeals]) => (
+                <div key={dateStr} className="space-y-3">
+                  <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider pl-1">
+                    {getGroupHeader(dateStr)}
+                  </h3>
+                  <div className="grid gap-3">
+                    {groupMeals.map((meal) => (
+                      <Card key={meal.id} className="shadow-sm hover:shadow-md transition-shadow">
+                        <CardContent className="p-4 flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="h-10 w-10 rounded-full bg-primary/5 flex items-center justify-center text-muted-foreground">
+                              <Utensils className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{meal.description}</p>
+                              <p className="text-xs text-muted-foreground">{meal.type}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-lg mr-4">{meal.calories} <span className="text-xs font-normal text-muted-foreground">kcal</span></span>
+                            {/* Botões de Ação do CRUD (Update e Delete) no histórico */}
+                            <EditMealModal meal={meal} onMealUpdated={fetchUserData} />
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-muted-foreground hover:text-red-600"
+                              onClick={() => handleDeleteMeal(meal)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
         )}
       </div>
+
+      {/* Modal de Confirmação de Exclusão de Refeição */}
+      <Dialog open={!!mealToDelete} onOpenChange={(open) => { if (!open) setMealToDelete(null); }}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 font-bold flex items-center gap-2">
+              Confirmar Exclusão
+            </DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir a refeição <strong>"{mealToDelete?.description}"</strong>?
+              Esta ação removerá permanentemente o registro e não poderá ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setMealToDelete(null)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={executeDeleteMeal}>
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
